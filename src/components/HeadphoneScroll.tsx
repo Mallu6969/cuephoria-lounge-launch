@@ -67,15 +67,15 @@ const HeadphoneScroll = () => {
     if (!ctx) return;
 
     const updateCanvasSize = () => {
-      const container = containerRef.current;
-      if (container && canvas) {
-        const rect = container.getBoundingClientRect();
+      if (canvas) {
         const dpr = window.devicePixelRatio || 1;
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
         ctx.scale(dpr, dpr);
-        canvas.style.width = `${rect.width}px`;
-        canvas.style.height = `${rect.height}px`;
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
       }
     };
 
@@ -176,8 +176,8 @@ const HeadphoneScroll = () => {
         <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden bg-[#050505]">
           <canvas
             ref={canvasRef}
-            className="w-full h-full object-contain"
-            style={{ imageRendering: 'high-quality' }}
+            className="w-full h-full"
+            style={{ imageRendering: 'high-quality', objectFit: 'contain' }}
           />
         </div>
 
