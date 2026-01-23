@@ -13,7 +13,7 @@ const EightBallModel = ({ onLoaded }: EightBallModelProps) => {
   const groupRef = useRef<THREE.Group>(null);
   const sceneRef = useRef<THREE.Group | null>(null);
   const isMobile = useIsMobile();
-  const scaleFactor = isMobile ? 40.0 : 60.0;
+  const scaleFactor = isMobile ? 2.0 : 3.0;
   const [modelReady, setModelReady] = useState(false);
   
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -75,9 +75,11 @@ const EightBallModel = ({ onLoaded }: EightBallModelProps) => {
     // Center the model at origin
     clonedScene.position.sub(center);
     
-    // Scale the model - adjust scale based on size to ensure visibility
+    // Scale the model to a reasonable size
+    // Calculate scale to make the model fit nicely in view (target size around 2-3 units)
     const maxSize = Math.max(size.x, size.y, size.z);
-    const adjustedScale = maxSize > 0 ? scaleFactor / maxSize : scaleFactor;
+    const targetSize = scaleFactor; // Target size in world units
+    const adjustedScale = maxSize > 0 ? targetSize / maxSize : 1;
     clonedScene.scale.set(adjustedScale, adjustedScale, adjustedScale);
 
     // Store reference and add to group
@@ -142,7 +144,7 @@ const EightBallModel = ({ onLoaded }: EightBallModelProps) => {
   });
 
   return (
-    <group ref={groupRef} position={[0, 0, 0]}>
+    <group ref={groupRef} position={[0, 0, 0]} rotation={[0, 0, 0]}>
       {/* Scene will be added via useEffect */}
     </group>
   );
@@ -192,7 +194,7 @@ const PoolBalls3D = ({ onLoaded }: PoolBalls3DProps) => {
   return (
     <div className="fixed inset-0 w-screen h-screen z-0 pointer-events-none" style={{ zIndex: 0 }}>
       <Canvas
-        camera={{ position: [0, 0, 8], fov: 60 }}
+        camera={{ position: [0, 0, 5], fov: 50 }}
         style={{ background: 'transparent', width: '100%', height: '100%' }}
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
         dpr={[1, 2]}
