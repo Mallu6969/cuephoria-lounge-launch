@@ -1,199 +1,64 @@
-import { useRef, useEffect, useState, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { useGLTF, Environment } from '@react-three/drei';
-import * as THREE from 'three';
-import { useIsMobile } from '@/hooks/use-mobile';
-
-interface EightBallModelProps {
-  onLoaded?: () => void;
-}
-
-const EightBallModel = ({ onLoaded }: EightBallModelProps) => {
-  const { scene } = useGLTF('/flying-8-ball/source/Flying_8_Bal_NEW.glb');
-  const groupRef = useRef<THREE.Group>(null);
-  const isMobile = useIsMobile();
-  
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const targetRotation = useRef({ x: 0, y: 0 });
-  const currentRotation = useRef({ x: 0, y: 0 });
-  const idleRotation = useRef({ x: 0, y: 0 });
-
-  // Process the scene once
-  const processedScene = useMemo(() => {
-    if (!scene) return null;
-
-    const clonedScene = scene.clone();
-    const unwantedNames = ['table', 'floor', 'base', 'plane'];
-
-    // Hide unwanted meshes and enhance materials
-    clonedScene.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        const name = child.name.toLowerCase();
-        const shouldHide = unwantedNames.some(unwanted => name.includes(unwanted));
-        
-        if (shouldHide) {
-          child.visible = false;
-        } else {
-          // Enhance materials for realism
-          if (child.material instanceof THREE.MeshStandardMaterial) {
-            child.material.roughness = 0.3;
-            child.material.metalness = 0.1;
-            child.material.envMapIntensity = 1.2;
-          } else if (Array.isArray(child.material)) {
-            child.material.forEach((mat) => {
-              if (mat instanceof THREE.MeshStandardMaterial) {
-                mat.roughness = 0.3;
-                mat.metalness = 0.1;
-                mat.envMapIntensity = 1.2;
-              }
-            });
-          }
-        }
-      }
-    });
-
-    // Center and scale the model
-    const box = new THREE.Box3().setFromObject(clonedScene);
-    const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
-    
-    // Center the model at origin
-    clonedScene.position.sub(center);
-    
-    // Scale to a reasonable size (target: ~1.5 units for mobile, ~2 units for desktop)
-    const targetSize = isMobile ? 1.5 : 2.0;
-    const maxSize = Math.max(size.x, size.y, size.z);
-    const scale = maxSize > 0 ? targetSize / maxSize : 1;
-    clonedScene.scale.set(scale, scale, scale);
-
-    return clonedScene;
-  }, [scene, isMobile]);
-
-  // Notify when model is ready
-  useEffect(() => {
-    if (processedScene && onLoaded) {
-      setTimeout(() => {
-        onLoaded();
-      }, 300);
-    }
-  }, [processedScene, onLoaded]);
-
-  // Mouse tracking
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth) * 2 - 1;
-      const y = -(e.clientY / window.innerHeight) * 2 + 1;
-      setMousePosition({ x, y });
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
-
-  // Smooth rotation with lerp
-  useFrame((state) => {
-    if (!groupRef.current) return;
-
-    // Calculate target rotation from mouse position (capped for realistic inertia)
-    targetRotation.current.y = mousePosition.x * 0.3;
-    targetRotation.current.x = mousePosition.y * 0.3;
-
-    // Idle breathing motion when cursor is idle
-    const mouseIdle = Math.abs(mousePosition.x) < 0.1 && Math.abs(mousePosition.y) < 0.1;
-    if (mouseIdle) {
-      idleRotation.current.x = Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
-      idleRotation.current.y = Math.cos(state.clock.elapsedTime * 0.3) * 0.1;
-    } else {
-      idleRotation.current.x = 0;
-      idleRotation.current.y = 0;
-    }
-
-    // Lerp to target rotation (smooth interpolation)
-    const lerpFactor = 0.05;
-    currentRotation.current.x = THREE.MathUtils.lerp(
-      currentRotation.current.x,
-      targetRotation.current.x + idleRotation.current.x,
-      lerpFactor
-    );
-    currentRotation.current.y = THREE.MathUtils.lerp(
-      currentRotation.current.y,
-      targetRotation.current.y + idleRotation.current.y,
-      lerpFactor
-    );
-
-    groupRef.current.rotation.x = currentRotation.current.x;
-    groupRef.current.rotation.y = currentRotation.current.y;
-  });
-
-  if (!processedScene) {
-    return null;
-  }
-
-  return (
-    <group ref={groupRef} position={[0, 0, 0]}>
-      <primitive object={processedScene} />
-    </group>
-  );
-};
-
-// Lighting setup
-const Lighting = () => {
-  return (
-    <>
-      {/* Hemisphere Light - warm sky, deep blue ground */}
-      <hemisphereLight
-        args={['#ffffff', '#1E3A5F', 0.8]}
-        position={[0, 10, 0]}
-      />
-      
-      {/* Strong Directional Light - pool table lamp */}
-      <directionalLight
-        position={[0, 8, 5]}
-        intensity={1.5}
-        castShadow={false}
-      />
-      
-      {/* Additional fill light */}
-      <directionalLight
-        position={[-5, 5, -5]}
-        intensity={0.5}
-      />
-      
-      {/* Rim light for separation */}
-      <pointLight
-        position={[-5, 0, -5]}
-        intensity={0.4}
-        color="#3FD0C9"
-      />
-      
-      {/* Ambient light for overall illumination */}
-      <ambientLight intensity={0.3} />
-    </>
-  );
-};
+import { useEffect, useRef } from 'react';
 
 interface PoolBalls3DProps {
   onLoaded?: () => void;
 }
 
 const PoolBalls3D = ({ onLoaded }: PoolBalls3DProps) => {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const hasLoadedRef = useRef(false);
+
+  useEffect(() => {
+    // Notify when iframe loads
+    const handleLoad = () => {
+      if (!hasLoadedRef.current && onLoaded) {
+        hasLoadedRef.current = true;
+        // Give Sketchfab a moment to initialize
+        setTimeout(() => {
+          onLoaded();
+        }, 1000);
+      }
+    };
+
+    const iframe = iframeRef.current;
+    if (iframe) {
+      iframe.addEventListener('load', handleLoad);
+    }
+
+    // Fallback: trigger after a reasonable delay if load event doesn't fire
+    // (can happen with cross-origin iframes)
+    const fallbackTimer = setTimeout(() => {
+      if (!hasLoadedRef.current && onLoaded) {
+        handleLoad();
+      }
+    }, 2000);
+
+    return () => {
+      if (iframe) {
+        iframe.removeEventListener('load', handleLoad);
+      }
+      clearTimeout(fallbackTimer);
+    };
+  }, [onLoaded]);
+
   return (
     <div className="fixed inset-0 w-screen h-screen z-0 pointer-events-none">
-      <Canvas
-        camera={{ position: [0, 0, 5], fov: 50 }}
-        style={{ background: 'transparent', width: '100%', height: '100%' }}
-        gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-        dpr={[1, 2]}
-      >
-        <Lighting />
-        <Environment preset="city" />
-        <EightBallModel onLoaded={onLoaded} />
-      </Canvas>
+      <iframe
+        ref={iframeRef}
+        title="Skull Biting 8 Ball"
+        frameBorder="0"
+        allowFullScreen
+        allow="autoplay; fullscreen; xr-spatial-tracking"
+        style={{
+          width: '100%',
+          height: '100%',
+          border: 'none',
+          background: 'transparent',
+        }}
+        src="https://sketchfab.com/models/2c91f8b8fa184ee881b6f31b27b0bc42/embed"
+      />
     </div>
   );
 };
-
-// Preload the model
-useGLTF.preload('/flying-8-ball/source/Flying_8_Bal_NEW.glb');
 
 export default PoolBalls3D;
