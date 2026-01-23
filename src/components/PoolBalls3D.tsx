@@ -34,8 +34,8 @@ const PoolBalls3D = ({ onLoaded }: PoolBalls3DProps) => {
         
         // Wait for viewer to be ready
         api.addEventListener('viewerready', () => {
-          // Set initial camera position
-          api.setCameraLookAt([0, 0, 5], [0, 0, 0], () => {});
+          // Set initial camera position - further away to make model appear smaller
+          api.setCameraLookAt([0, 0, 8], [0, 0, 0], () => {});
           
           if (!hasLoadedRef.current && onLoaded) {
             hasLoadedRef.current = true;
@@ -123,7 +123,7 @@ const PoolBalls3D = ({ onLoaded }: PoolBalls3DProps) => {
 
       // Convert normalized rotation to camera position
       // Using spherical coordinates for smooth rotation
-      const radius = 5;
+      const radius = 8; // Increased distance to make model appear smaller
       const longitude = currentRotation.current.y * Math.PI; // Full rotation
       const latitude = currentRotation.current.x * (Math.PI / 3); // Limited vertical movement
 
