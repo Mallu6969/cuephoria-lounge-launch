@@ -8,58 +8,55 @@
 
 @layer base {
   :root {
-    /* Dark theme as default for gaming lounge */
-    --background: 220 20% 4%;
-    --foreground: 210 40% 98%;
+    /* 8-Ball Theme - Deep Charcoal Background */
+    --background: 210 20% 7%; /* #0B0F14 */
+    --foreground: 210 20% 98%; /* Chalk White #F5F7FA */
 
-    --card: 220 20% 8%;
-    --card-foreground: 210 40% 98%;
+    --card: 210 20% 10%;
+    --card-foreground: 210 20% 98%;
 
-    --popover: 220 20% 8%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 210 20% 10%;
+    --popover-foreground: 210 20% 98%;
 
-    /* Neon Cyan as primary */
-    --primary: 185 100% 50%;
-    --primary-foreground: 220 20% 4%;
+    /* Championship Gold as primary */
+    --primary: 45 70% 65%; /* #E6C15A */
+    --primary-foreground: 210 20% 7%;
 
-    /* Electric Purple as secondary */
-    --secondary: 270 100% 65%;
-    --secondary-foreground: 210 40% 98%;
+    /* Felt Navy as secondary */
+    --secondary: 210 50% 25%; /* #1E3A5F */
+    --secondary-foreground: 210 20% 98%;
 
-    --muted: 220 15% 15%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 210 15% 15%;
+    --muted-foreground: 210 20% 70%;
 
-    /* Accent - neon pink */
-    --accent: 320 100% 60%;
-    --accent-foreground: 210 40% 98%;
+    /* Subtle cyber glow accent */
+    --accent: 180 60% 55%; /* #3FD0C9 */
+    --accent-foreground: 210 20% 98%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 210 20% 98%;
 
-    --border: 220 15% 20%;
-    --input: 220 15% 15%;
-    --ring: 185 100% 50%;
+    --border: 210 20% 20%;
+    --input: 210 15% 15%;
+    --ring: 45 70% 65%;
 
     --radius: 0.75rem;
 
-    /* Neon glow colors */
-    --neon-cyan: 185 100% 50%;
-    --neon-purple: 270 100% 65%;
-    --neon-pink: 320 100% 60%;
-    --neon-blue: 210 100% 60%;
+    /* 8-Ball theme colors */
+    --gold: 45 70% 65%; /* Championship Gold #E6C15A */
+    --navy: 210 50% 25%; /* Felt Navy #1E3A5F */
+    --chalk: 210 20% 98%; /* Chalk White #F5F7FA */
+    --neon-edge: 180 60% 55%; /* Neon Edge #3FD0C9 */
+    --charcoal: 210 20% 7%; /* Deep Charcoal #0B0F14 */
 
-    /* Gradients */
-    --gradient-neon: linear-gradient(135deg, hsl(185 100% 50%), hsl(270 100% 65%));
-    --gradient-dark: linear-gradient(180deg, hsl(220 20% 4%), hsl(220 20% 8%));
-
-    --sidebar-background: 220 20% 6%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 185 100% 50%;
-    --sidebar-primary-foreground: 220 20% 4%;
-    --sidebar-accent: 220 15% 15%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 15% 20%;
-    --sidebar-ring: 185 100% 50%;
+    --sidebar-background: 210 20% 8%;
+    --sidebar-foreground: 210 20% 98%;
+    --sidebar-primary: 45 70% 65%;
+    --sidebar-primary-foreground: 210 20% 7%;
+    --sidebar-accent: 210 15% 15%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-border: 210 20% 20%;
+    --sidebar-ring: 45 70% 65%;
   }
 
   .dark {
@@ -102,7 +99,7 @@
   }
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900;1000&family=Space+Grotesk:wght@400;500;600;700;800;900&display=swap');
 
 @layer base {
   * {
@@ -111,21 +108,20 @@
 
   body {
     @apply text-foreground;
-    background-color: #050505;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', sans-serif;
+    background-color: #0B0F14;
+    font-family: 'Inter', 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    letter-spacing: -0.02em;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply text-white/90;
-    letter-spacing: -0.03em;
+    @apply text-[#F5F7FA];
+    font-weight: 900;
+    letter-spacing: -0.05em;
   }
 
   p, span, div {
-    @apply text-white/60;
-    letter-spacing: -0.01em;
+    @apply text-[#F5F7FA]/80;
   }
 }
 
@@ -161,15 +157,29 @@
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, hsl(var(--neon-cyan)), hsl(var(--neon-purple)));
+    background: linear-gradient(135deg, #E6C15A, #3FD0C9);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .glass {
-    background: hsl(var(--background) / 0.8);
-    backdrop-filter: blur(12px);
-    border: 1px solid hsl(var(--border) / 0.5);
+    background: rgba(11, 15, 20, 0.7);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(230, 193, 90, 0.2);
+  }
+
+  .gold-glow {
+    box-shadow: 
+      0 0 20px rgba(230, 193, 90, 0.5),
+      0 0 40px rgba(230, 193, 90, 0.3),
+      inset 0 0 20px rgba(230, 193, 90, 0.1);
+  }
+
+  .vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 0%, rgba(11, 15, 20, 0.8) 100%);
+    pointer-events: none;
   }
 }
