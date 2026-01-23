@@ -183,3 +183,44 @@
     pointer-events: none;
   }
 }
+
+/* Hero 3D Container Styles */
+.hero-3d {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.sketchfab-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  height: 300px;
+}
+
+.sketchfab-iframe {
+  width: 300px;
+  height: 300px;
+  border: none;
+  background: transparent;
+  display: block;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .sketchfab-container {
+    width: 220px;
+    height: 220px;
+  }
+
+  .sketchfab-iframe {
+    width: 220px;
+    height: 220px;
+  }
+}

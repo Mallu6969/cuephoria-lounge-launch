@@ -15,10 +15,9 @@ const PoolBalls3D = ({ onLoaded }: PoolBalls3DProps) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const apiRef = useRef<any>(null);
   const hasLoadedRef = useRef(false);
-  const targetRotation = useRef({ x: 0, y: 0 });
-  const currentRotation = useRef({ x: 0, y: 0 });
   const animationFrameRef = useRef<number | null>(null);
   const scriptLoadedRef = useRef(false);
+  const startTimeRef = useRef<number>(0);
 
   // Initialize Sketchfab Viewer
   const initializeViewer = () => {
@@ -31,6 +30,7 @@ const PoolBalls3D = ({ onLoaded }: PoolBalls3DProps) => {
     client.init(modelUID, {
       success: (api: any) => {
         apiRef.current = api;
+        startTimeRef.current = Date.now();
         
         // Wait for viewer to be ready
         api.addEventListener('viewerready', () => {
@@ -78,7 +78,7 @@ const PoolBalls3D = ({ onLoaded }: PoolBalls3DProps) => {
     };
   }, []);
 
-  // Initialize when script is loaded (using a state to trigger re-initialization)
+  // Initialize when script is loaded
   useEffect(() => {
     const checkAndInit = () => {
       if (scriptLoadedRef.current && window.Sketchfab && iframeRef.current && !apiRef.current) {
@@ -93,22 +93,7 @@ const PoolBalls3D = ({ onLoaded }: PoolBalls3DProps) => {
     return () => clearInterval(interval);
   }, []);
 
-  // Mouse tracking
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth) * 2 - 1;
-      const y = -(e.clientY / window.innerHeight) * 2 + 1;
-      
-      // Calculate target rotation (capped for smooth movement)
-      targetRotation.current.y = x * 0.5; // Horizontal rotation
-      targetRotation.current.x = y * 0.3; // Vertical rotation
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
-
-  // Smooth rotation animation
+  // Continuous idle rotation animation (Y-axis only, 25 seconds per rotation)
   useEffect(() => {
     const animate = () => {
       if (!apiRef.current) {
@@ -116,23 +101,19 @@ const PoolBalls3D = ({ onLoaded }: PoolBalls3DProps) => {
         return;
       }
 
-      // Smooth interpolation (lerp)
-      const lerpFactor = 0.05;
-      currentRotation.current.x += (targetRotation.current.x - currentRotation.current.x) * lerpFactor;
-      currentRotation.current.y += (targetRotation.current.y - currentRotation.current.y) * lerpFactor;
+      // Calculate rotation based on elapsed time
+      // One full rotation (360 degrees = 2π radians) every 25 seconds
+      const elapsed = (Date.now() - startTimeRef.current) / 1000; // seconds
+      const rotationSpeed = (2 * Math.PI) / 25; // radians per second
+      const yRotation = elapsed * rotationSpeed;
 
-      // Convert normalized rotation to camera position
-      // Using spherical coordinates for smooth rotation
-      const radius = 8; // Increased distance to make model appear smaller
-      const longitude = currentRotation.current.y * Math.PI; // Full rotation
-      const latitude = currentRotation.current.x * (Math.PI / 3); // Limited vertical movement
+      // Convert Y-axis rotation to camera position using spherical coordinates
+      const radius = 8;
+      const cameraX = Math.sin(yRotation) * radius;
+      const cameraY = 0; // Keep camera at same height
+      const cameraZ = Math.cos(yRotation) * radius;
 
-      // Calculate camera position in 3D space
-      const cameraX = Math.sin(latitude) * Math.cos(longitude) * radius;
-      const cameraY = Math.cos(latitude) * radius;
-      const cameraZ = Math.sin(latitude) * Math.sin(longitude) * radius;
-
-      // Apply rotation to Sketchfab camera
+      // Apply rotation to Sketchfab camera (only Y-axis rotation)
       apiRef.current.setCameraLookAt(
         [cameraX, cameraY, cameraZ],
         [0, 0, 0], // Look at origin
@@ -152,20 +133,17 @@ const PoolBalls3D = ({ onLoaded }: PoolBalls3DProps) => {
   }, []);
 
   return (
-    <div className="fixed inset-0 w-screen h-screen z-0 pointer-events-none">
-      <iframe
-        ref={iframeRef}
-        title="Skull Biting 8 Ball"
-        frameBorder="0"
-        allowFullScreen
-        allow="autoplay; fullscreen; xr-spatial-tracking"
-        style={{
-          width: '100%',
-          height: '100%',
-          border: 'none',
-          background: 'transparent',
-        }}
-      />
+    <div className="hero-3d">
+      <div className="sketchfab-container">
+        <iframe
+          ref={iframeRef}
+          title="Skull Biting 8 Ball"
+          frameBorder="0"
+          allowFullScreen
+          allow="autoplay; fullscreen; xr-spatial-tracking"
+          className="sketchfab-iframe"
+        />
+      </div>
     </div>
   );
 };
