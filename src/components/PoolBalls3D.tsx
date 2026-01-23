@@ -25,7 +25,7 @@ const PoolBalls3D = ({ onLoaded }: PoolBalls3DProps) => {
 
     const iframe = iframeRef.current;
     const client = new window.Sketchfab(iframe);
-    const modelUID = '2c91f8b8fa184ee881b6f31b27b0bc42';
+    const modelUID = '2c148dd8c1cb839f1fb014213069d443e7551382';
 
     client.init(modelUID, {
       success: (api: any) => {
