@@ -70,8 +70,8 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        heading: ["'Orbitron'", "sans-serif"],
-        body: ["'Inter'", "sans-serif"],
+        heading: ["'Space Grotesk'", "'Inter'", "sans-serif"],
+        body: ["'Inter'", "'Space Grotesk'", "sans-serif"],
       },
       keyframes: {
         "accordion-down": {
@@ -101,6 +101,9 @@ export default {
         float: "float 6s ease-in-out infinite",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
         shimmer: "shimmer 2s linear infinite",
+      },
+      backgroundImage: {
+        "gradient-radial": "radial-gradient(circle, var(--tw-gradient-stops))",
       },
     },
   },
