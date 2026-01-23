@@ -42,8 +42,8 @@ const Hero = ({ onModelLoaded }: HeroProps) => {
       {/* 3D Canvas - Fixed behind UI */}
       <PoolBalls3D onLoaded={handleModelLoaded} />
 
-      {/* Background Text: EIGHTBALL */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+      {/* Background Text: CUEPHORIA */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[1]">
         <h1
           className="font-heading font-black text-[#E6C15A] select-none"
           style={{
@@ -54,7 +54,7 @@ const Hero = ({ onModelLoaded }: HeroProps) => {
             transform: isMobile ? 'translateY(-8vh)' : 'translateY(-5vh)',
           }}
         >
-          EIGHTBALL
+          CUEPHORIA
         </h1>
       </div>
 

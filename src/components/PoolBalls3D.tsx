@@ -11,43 +11,86 @@ interface EightBallModelProps {
 const EightBallModel = ({ onLoaded }: EightBallModelProps) => {
   const { scene } = useGLTF('/flying-8-ball/source/Flying_8_Bal_NEW.glb');
   const groupRef = useRef<THREE.Group>(null);
+  const sceneRef = useRef<THREE.Group | null>(null);
   const isMobile = useIsMobile();
   const scaleFactor = isMobile ? 40.0 : 60.0;
+  const [modelReady, setModelReady] = useState(false);
   
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const targetRotation = useRef({ x: 0, y: 0 });
   const currentRotation = useRef({ x: 0, y: 0 });
   const idleRotation = useRef({ x: 0, y: 0 });
 
-  // Hide unwanted meshes
+  // Process and setup the model
   useEffect(() => {
+    if (!scene || !groupRef.current) return;
+
+    // Clone the scene to avoid mutating the original
+    const clonedScene = scene.clone();
+    
     const unwantedNames = ['table', 'floor', 'base', 'plane'];
-    scene.traverse((child) => {
+    let visibleCount = 0;
+
+    clonedScene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         const name = child.name.toLowerCase();
-        if (unwantedNames.some(unwanted => name.includes(unwanted))) {
+        const shouldHide = unwantedNames.some(unwanted => name.includes(unwanted));
+        
+        if (shouldHide) {
           child.visible = false;
         } else {
+          visibleCount++;
           // Enhance materials for realism
           if (child.material instanceof THREE.MeshStandardMaterial) {
             child.material.roughness = 0.3;
             child.material.metalness = 0.1;
             child.material.envMapIntensity = 1.2;
+          } else if (Array.isArray(child.material)) {
+            child.material.forEach((mat) => {
+              if (mat instanceof THREE.MeshStandardMaterial) {
+                mat.roughness = 0.3;
+                mat.metalness = 0.1;
+                mat.envMapIntensity = 1.2;
+              }
+            });
           }
         }
       }
     });
 
-    // Center the model
-    const box = new THREE.Box3().setFromObject(scene);
-    const center = box.getCenter(new THREE.Vector3());
-    scene.position.sub(center);
-    
-    // Scale the model
-    scene.scale.set(scaleFactor, scaleFactor, scaleFactor);
+    // If all meshes were hidden, make them visible again (safety check)
+    if (visibleCount === 0) {
+      clonedScene.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.visible = true;
+        }
+      });
+    }
 
+    // Center the model
+    const box = new THREE.Box3().setFromObject(clonedScene);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    
+    // Center the model at origin
+    clonedScene.position.sub(center);
+    
+    // Scale the model - adjust scale based on size to ensure visibility
+    const maxSize = Math.max(size.x, size.y, size.z);
+    const adjustedScale = maxSize > 0 ? scaleFactor / maxSize : scaleFactor;
+    clonedScene.scale.set(adjustedScale, adjustedScale, adjustedScale);
+
+    // Store reference and add to group
+    sceneRef.current = clonedScene;
+    groupRef.current.add(clonedScene);
+
+    setModelReady(true);
+    
+    // Call onLoaded after a short delay to ensure render
     if (onLoaded) {
-      onLoaded();
+      setTimeout(() => {
+        onLoaded();
+      }, 200);
     }
   }, [scene, scaleFactor, onLoaded]);
 
@@ -65,7 +108,7 @@ const EightBallModel = ({ onLoaded }: EightBallModelProps) => {
 
   // Smooth rotation with lerp
   useFrame((state, delta) => {
-    if (!groupRef.current) return;
+    if (!groupRef.current || !modelReady) return;
 
     // Calculate target rotation from mouse position (capped for realistic inertia)
     targetRotation.current.y = mousePosition.x * 0.3;
@@ -99,8 +142,8 @@ const EightBallModel = ({ onLoaded }: EightBallModelProps) => {
   });
 
   return (
-    <group ref={groupRef}>
-      <primitive object={scene} />
+    <group ref={groupRef} position={[0, 0, 0]}>
+      {/* Scene will be added via useEffect */}
     </group>
   );
 };
@@ -111,30 +154,32 @@ const Lighting = () => {
     <>
       {/* Hemisphere Light - warm sky, deep blue ground */}
       <hemisphereLight
-        args={['#ffffff', '#1E3A5F', 0.6]}
+        args={['#ffffff', '#1E3A5F', 0.8]}
         position={[0, 10, 0]}
       />
       
       {/* Strong Directional Light - pool table lamp */}
       <directionalLight
         position={[0, 8, 5]}
-        intensity={1.2}
-        castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
-        shadow-camera-far={50}
-        shadow-camera-left={-10}
-        shadow-camera-right={10}
-        shadow-camera-top={10}
-        shadow-camera-bottom={-10}
+        intensity={1.5}
+        castShadow={false}
+      />
+      
+      {/* Additional fill light */}
+      <directionalLight
+        position={[-5, 5, -5]}
+        intensity={0.5}
       />
       
       {/* Rim light for separation */}
       <pointLight
         position={[-5, 0, -5]}
-        intensity={0.3}
+        intensity={0.4}
         color="#3FD0C9"
       />
+      
+      {/* Ambient light for overall illumination */}
+      <ambientLight intensity={0.3} />
     </>
   );
 };
@@ -145,11 +190,12 @@ interface PoolBalls3DProps {
 
 const PoolBalls3D = ({ onLoaded }: PoolBalls3DProps) => {
   return (
-    <div className="fixed inset-0 w-screen h-screen -z-10">
+    <div className="fixed inset-0 w-screen h-screen z-0 pointer-events-none" style={{ zIndex: 0 }}>
       <Canvas
-        camera={{ position: [0, 0, 5], fov: 50 }}
-        style={{ background: 'transparent' }}
-        gl={{ antialias: true, alpha: true }}
+        camera={{ position: [0, 0, 8], fov: 60 }}
+        style={{ background: 'transparent', width: '100%', height: '100%' }}
+        gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+        dpr={[1, 2]}
       >
         <Lighting />
         <Environment preset="city" />
