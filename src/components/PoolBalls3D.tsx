@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useGLTF, Environment } from '@react-three/drei';
 import * as THREE from 'three';
@@ -11,26 +11,21 @@ interface EightBallModelProps {
 const EightBallModel = ({ onLoaded }: EightBallModelProps) => {
   const { scene } = useGLTF('/flying-8-ball/source/Flying_8_Bal_NEW.glb');
   const groupRef = useRef<THREE.Group>(null);
-  const sceneRef = useRef<THREE.Group | null>(null);
   const isMobile = useIsMobile();
-  const scaleFactor = isMobile ? 2.0 : 3.0;
-  const [modelReady, setModelReady] = useState(false);
   
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const targetRotation = useRef({ x: 0, y: 0 });
   const currentRotation = useRef({ x: 0, y: 0 });
   const idleRotation = useRef({ x: 0, y: 0 });
 
-  // Process and setup the model
-  useEffect(() => {
-    if (!scene || !groupRef.current) return;
+  // Process the scene once
+  const processedScene = useMemo(() => {
+    if (!scene) return null;
 
-    // Clone the scene to avoid mutating the original
     const clonedScene = scene.clone();
-    
     const unwantedNames = ['table', 'floor', 'base', 'plane'];
-    let visibleCount = 0;
 
+    // Hide unwanted meshes and enhance materials
     clonedScene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         const name = child.name.toLowerCase();
@@ -39,7 +34,6 @@ const EightBallModel = ({ onLoaded }: EightBallModelProps) => {
         if (shouldHide) {
           child.visible = false;
         } else {
-          visibleCount++;
           // Enhance materials for realism
           if (child.material instanceof THREE.MeshStandardMaterial) {
             child.material.roughness = 0.3;
@@ -58,16 +52,7 @@ const EightBallModel = ({ onLoaded }: EightBallModelProps) => {
       }
     });
 
-    // If all meshes were hidden, make them visible again (safety check)
-    if (visibleCount === 0) {
-      clonedScene.traverse((child) => {
-        if (child instanceof THREE.Mesh) {
-          child.visible = true;
-        }
-      });
-    }
-
-    // Center the model
+    // Center and scale the model
     const box = new THREE.Box3().setFromObject(clonedScene);
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
@@ -75,26 +60,23 @@ const EightBallModel = ({ onLoaded }: EightBallModelProps) => {
     // Center the model at origin
     clonedScene.position.sub(center);
     
-    // Scale the model to a reasonable size
-    // Calculate scale to make the model fit nicely in view (target size around 2-3 units)
+    // Scale to a reasonable size (target: ~1.5 units for mobile, ~2 units for desktop)
+    const targetSize = isMobile ? 1.5 : 2.0;
     const maxSize = Math.max(size.x, size.y, size.z);
-    const targetSize = scaleFactor; // Target size in world units
-    const adjustedScale = maxSize > 0 ? targetSize / maxSize : 1;
-    clonedScene.scale.set(adjustedScale, adjustedScale, adjustedScale);
+    const scale = maxSize > 0 ? targetSize / maxSize : 1;
+    clonedScene.scale.set(scale, scale, scale);
 
-    // Store reference and add to group
-    sceneRef.current = clonedScene;
-    groupRef.current.add(clonedScene);
+    return clonedScene;
+  }, [scene, isMobile]);
 
-    setModelReady(true);
-    
-    // Call onLoaded after a short delay to ensure render
-    if (onLoaded) {
+  // Notify when model is ready
+  useEffect(() => {
+    if (processedScene && onLoaded) {
       setTimeout(() => {
         onLoaded();
-      }, 200);
+      }, 300);
     }
-  }, [scene, scaleFactor, onLoaded]);
+  }, [processedScene, onLoaded]);
 
   // Mouse tracking
   useEffect(() => {
@@ -109,8 +91,8 @@ const EightBallModel = ({ onLoaded }: EightBallModelProps) => {
   }, []);
 
   // Smooth rotation with lerp
-  useFrame((state, delta) => {
-    if (!groupRef.current || !modelReady) return;
+  useFrame((state) => {
+    if (!groupRef.current) return;
 
     // Calculate target rotation from mouse position (capped for realistic inertia)
     targetRotation.current.y = mousePosition.x * 0.3;
@@ -143,9 +125,13 @@ const EightBallModel = ({ onLoaded }: EightBallModelProps) => {
     groupRef.current.rotation.y = currentRotation.current.y;
   });
 
+  if (!processedScene) {
+    return null;
+  }
+
   return (
-    <group ref={groupRef} position={[0, 0, 0]} rotation={[0, 0, 0]}>
-      {/* Scene will be added via useEffect */}
+    <group ref={groupRef} position={[0, 0, 0]}>
+      <primitive object={processedScene} />
     </group>
   );
 };
@@ -192,7 +178,7 @@ interface PoolBalls3DProps {
 
 const PoolBalls3D = ({ onLoaded }: PoolBalls3DProps) => {
   return (
-    <div className="fixed inset-0 w-screen h-screen z-0 pointer-events-none" style={{ zIndex: 0 }}>
+    <div className="fixed inset-0 w-screen h-screen z-0 pointer-events-none">
       <Canvas
         camera={{ position: [0, 0, 5], fov: 50 }}
         style={{ background: 'transparent', width: '100%', height: '100%' }}
